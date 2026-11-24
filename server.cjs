@@ -121,6 +121,31 @@ app.put('/concesionarios/:id', async (req, res) => {
     }
 });
 
+app.delete('/concesionarios/:id', async (req, res) => {
+    if (!ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ message: 'ID no válido' });
+    }
+
+    const client = new MongoClient(process.env.MONGODB_URI);
+
+    try {
+        await client.connect();
+        const db = client.db(process.env.MONGODB_DB);
+        const collection = db.collection('concesionarios');
+
+        const result = await collection.deleteOne({ _id: new ObjectId(req.params.id) });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: 'Concesionario no encontrado' });
+        }
+        res.status(204).end();
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'No se pudo eliminar el concesionario' });
+    } finally {
+        await client.close();
+    }
+});
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Servidor disponible en http://localhost:${PORT}`);
